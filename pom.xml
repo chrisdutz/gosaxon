@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>org.github.chrisdutz</groupId>
+  <artifactId>gosaxon</artifactId>
+  <version>1.0.0-SNAPSHOT</version>
+  <packaging>pom</packaging>
+
+  <name>GoSaxon</name>
+  <description>GraalVM Application wrapping simple access to Saxon-HE, allowing XLST 3.0 transformations. Intended to be
+    used by the Go library.
+  </description>
+
+  <properties>
+    <java.version>1.8</java.version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+    <graalvm.version>21.0.0.2</graalvm.version>
+
+    <app.main.class>org.github.chrisdutz.gosaxon.GoSaxonTransformer</app.main.class>
+
+    <transformer.artifact.type>-undefined-</transformer.artifact.type>
+    <transformer.artifact.classifier>-undefined-</transformer.artifact.classifier>
+    <transformer.artifact.srcFileName>-undefined-</transformer.artifact.srcFileName>
+    <transformer.artifact.destFileName>-undefined-</transformer.artifact.destFileName>
+  </properties>
+
+  <modules>
+    <module>library</module>
+    <module>transformer</module>
+  </modules>
+
+  <build>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.apache.maven.plugins</groupId>
+          <artifactId>maven-compiler-plugin</artifactId>
+          <configuration>
+            <source>${java.version}</source>
+            <target>${java.version}</target>
+            <testSource>${java.version}</testSource>
+            <testTarget>${java.version}</testTarget>
+          </configuration>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+  </build>
+
+  <profiles>
+    <!-- Profile for linux (Self-Enabling) -->
+    <profile>
+      <id>os-unix</id>
+      <activation>
+        <os>
+          <family>unix</family>
+        </os>
+      </activation>
+      <properties>
+        <transformer.artifact.type>lnx</transformer.artifact.type>
+        <transformer.artifact.classifier>linux</transformer.artifact.classifier>
+        <transformer.artifact.srcFileName>gosaxon-transformer</transformer.artifact.srcFileName>
+        <transformer.artifact.destFileName>gosaxon-transformer.lnx</transformer.artifact.destFileName>
+      </properties>
+    </profile>
+    <!-- Profile for mac (Self-Enabling) -->
+    <profile>
+      <id>os-mac</id>
+      <activation>
+        <os>
+          <family>mac</family>
+        </os>
+      </activation>
+      <properties>
+        <transformer.artifact.type>mac</transformer.artifact.type>
+        <transformer.artifact.classifier>mac</transformer.artifact.classifier>
+        <transformer.artifact.srcFileName>gosaxon-transformer</transformer.artifact.srcFileName>
+        <transformer.artifact.destFileName>gosaxon-transformer.mac</transformer.artifact.destFileName>
+      </properties>
+    </profile>
+    <!-- profile for windows (Self-Enabling) -->
+    <profile>
+      <id>os-windows</id>
+      <activation>
+        <os>
+          <family>windows</family>
+        </os>
+      </activation>
+      <properties>
+        <transformer.artifact.type>win</transformer.artifact.type>
+        <transformer.artifact.classifier>windows</transformer.artifact.classifier>
+        <transformer.artifact.srcFileName>gosaxon-transformer.exe</transformer.artifact.srcFileName>
+        <transformer.artifact.destFileName>gosaxon-transformer.exe</transformer.artifact.destFileName>
+      </properties>
+    </profile>
+  </profiles>
+
+</project>

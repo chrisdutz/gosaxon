@@ -1,0 +1,179 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.github.chrisdutz</groupId>
+    <artifactId>gosaxon</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>gosaxon-transformer</artifactId>
+
+  <name>GoSaxon Transformer</name>
+  <description>Transformer binary actually doing the transformation.</description>
+
+  <properties>
+    <java.version>1.8</java.version>
+    <graalvm.version>21.0.0.2</graalvm.version>
+    <app.main.class>org.github.chrisdutz.gosaxon.GoSaxonTransformer</app.main.class>
+  </properties>
+
+  <build>
+    <plugins>
+      <!-- Build a fat jar containing all dependencies -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.2.4</version>
+        <executions>
+          <execution>
+            <id>generate-uber-jar</id>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>${app.main.class}</mainClass>
+                </transformer>
+              </transformers>
+              <finalName>${project.artifactId}</finalName>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Create a native executable via GraalVM -->
+      <plugin>
+        <groupId>org.graalvm.nativeimage</groupId>
+        <artifactId>native-image-maven-plugin</artifactId>
+        <version>${graalvm.version}</version>
+        <executions>
+          <!-- Build the standalone application used by the Java integration-tests -->
+          <execution>
+            <id>build-application</id>
+            <phase>package</phase>
+            <goals>
+              <goal>native-image</goal>
+            </goals>
+            <configuration>
+              <imageName>gosaxon-transformer</imageName>
+              <buildArgs>
+                --no-fallback
+                -H:ReflectionConfigurationFiles=${project.basedir}/src/main/config/reflect-config.json
+              </buildArgs>
+            </configuration>
+          </execution>
+          <!-- Build the shared library for usage in the go part -->
+          <!--execution>
+            <id>build-shared-library</id>
+            <phase>package</phase>
+            <goals>
+              <goal>native-image</goal>
+            </goals>
+            <configuration>
+              <imageName>gosaxon-transformer</imageName>
+              <buildArgs>
+                - -shared
+                - -no-fallback
+                -H:ReflectionConfigurationFiles=${project.basedir}/src/main/config/reflect-config.json
+              </buildArgs>
+            </configuration>
+          </execution-->
+        </executions>
+      </plugin>
+
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-failsafe-plugin</artifactId>
+        <version>2.22.2</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>integration-test</goal>
+              <goal>verify</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <systemProperties>
+            <property>
+              <name>buildDirectory</name>
+              <value>${project.build.directory}</value>
+            </property>
+          </systemProperties>
+        </configuration>
+      </plugin>
+
+      <!-- Attach the resulting binary to the maven artifacts -->
+      <plugin>
+        <groupId>org.codehaus.mojo</groupId>
+        <artifactId>build-helper-maven-plugin</artifactId>
+        <version>3.2.0</version>
+        <executions>
+          <execution>
+            <id>attach-transformer-executable</id>
+            <phase>package</phase>
+            <goals>
+              <goal>attach-artifact</goal>
+            </goals>
+            <configuration>
+              <artifacts>
+                <artifact>
+                  <file>${project.build.directory}/${transformer.artifact.srcFileName}</file>
+                  <type>${transformer.artifact.type}</type>
+                  <classifier>${transformer.artifact.classifier}</classifier>
+                </artifact>
+              </artifacts>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <groupId>net.sourceforge.saxon</groupId>
+      <artifactId>saxon</artifactId>
+      <version>9.1.0.8</version>
+    </dependency>
+
+    <dependency>
+      <groupId>org.junit.jupiter</groupId>
+      <artifactId>junit-jupiter-api</artifactId>
+      <version>5.7.0</version>
+      <scope>test</scope>
+    </dependency>
+
+    <dependency>
+      <groupId>org.graalvm.sdk</groupId>
+      <artifactId>graal-sdk</artifactId>
+      <version>${graalvm.version}</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>

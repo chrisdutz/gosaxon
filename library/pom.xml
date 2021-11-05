@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing,
+  software distributed under the License is distributed on an
+  "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+  KIND, either express or implied.  See the License for the
+  specific language governing permissions and limitations
+  under the License.
+  -->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>org.github.chrisdutz</groupId>
+    <artifactId>gosaxon</artifactId>
+    <version>1.0.0-SNAPSHOT</version>
+  </parent>
+
+  <artifactId>gosaxon-go-library</artifactId>
+  <packaging>mvn-golang</packaging>
+
+  <name>GoSaxon Go Library</name>
+  <description>Wrapper library for using the GoSaxon Transformer.</description>
+
+  <build>
+    <sourceDirectory>pkg</sourceDirectory>
+    <plugins>
+      <!-- Make sure the transformer executables are copied to the assets directory -->
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>3.1.2</version>
+        <executions>
+          <execution>
+            <id>copy-executables</id>
+            <!-- Intentionally this phase as we need it to be executed earlier -->
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>copy</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.github.chrisdutz</groupId>
+                  <artifactId>gosaxon-transformer</artifactId>
+                  <version>${project.version}</version>
+                  <type>${transformer.artifact.type}</type>
+                  <classifier>${transformer.artifact.classifier}</classifier>
+                  <destFileName>${transformer.artifact.destFileName}</destFileName>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.basedir}/internal/gosaxon/exec</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Run the go build -->
+      <plugin>
+        <groupId>com.igormaznitsa</groupId>
+        <artifactId>mvn-golang-wrapper</artifactId>
+        <version>2.3.6</version>
+        <extensions>true</extensions>
+        <executions>
+          <execution>
+            <id>default-fix</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>fix</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-get</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>get</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>default-fmt</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>fmt</goal>
+            </goals>
+            <configuration>
+              <packages>
+                <!-- We want to format every package here so we don't get dirty commits -->
+                <package>./...</package>
+              </packages>
+            </configuration>
+          </execution>
+          <execution>
+            <id>run-go-vet</id>
+            <phase>verify</phase>
+            <goals>
+              <goal>vet</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <packages>
+            <package>github.com/chrisdutz/gosaxon/library/pkg/gosaxon</package>
+          </packages>
+          <sources>${project.basedir}</sources>
+          <goVersion>1.16.2</goVersion>
+          <verbose>true</verbose>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
+
+  <dependencies>
+    <!-- Tell Maven to build this first -->
+    <dependency>
+      <groupId>org.github.chrisdutz</groupId>
+      <artifactId>gosaxon-transformer</artifactId>
+      <version>1.0.0-SNAPSHOT</version>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+</project>
