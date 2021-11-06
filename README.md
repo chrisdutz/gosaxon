@@ -8,6 +8,11 @@ In order to compile this module, we need to run the build using a GraalVM versio
 This can be downloaded from (Use the Community edition):
 https://www.graalvm.org/downloads/
 
+After unpacking the GraalVM SDK, you need to manually install the `native-image`.
+This is done by simply running the following command in the GraalVM SDKs `bin` directory:
+
+    gu install native-image
+
 ### Windows
 
 The GraalVM cross-compiler also requires the installation of VisualStudio (Not VSStudio Code) as well as the Windows 10 SDK.
