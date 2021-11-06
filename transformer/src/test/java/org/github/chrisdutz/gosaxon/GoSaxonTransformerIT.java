@@ -19,6 +19,8 @@
 
 package org.github.chrisdutz.gosaxon;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.lang3.SystemUtils;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
@@ -40,13 +42,23 @@ public class GoSaxonTransformerIT {
             System.out.println("Running in buildDirectory: " + buildDirectory);
 
             // Load the input xml from the classpath
-            InputStream xmlDataStream = getClass().getResourceAsStream("/M-0008_A-10D9-11-2951-O000A.xml");
+            InputStream xmlDataStream = getClass().getResourceAsStream("/test.xml");
             InputStream xsltDataStream = getClass().getResourceAsStream("/test.xslt");
 
             // Create a new process using the fat-jar we created in packaging.
             Runtime rt = Runtime.getRuntime();
             System.out.println("Transformation process: Starting");
-            Process proc = rt.exec(buildDirectory + "application/gosaxon-transformer.exe");
+            String executorName = "";
+            if(SystemUtils.IS_OS_WINDOWS) {
+                executorName = "gosaxon-transformer.exe";
+            } else if(SystemUtils.IS_OS_LINUX) {
+                executorName = "gosaxon-transformer.lnx";
+            } else if(SystemUtils.IS_OS_MAC) {
+                executorName = "gosaxon-transformer.mac";
+            } else {
+                throw new UnsupportedOperationException("This OS is currently not explicitly supported by GoSaxon");
+            }
+            Process proc = rt.exec(buildDirectory + File.separator + executorName);
             System.out.println("Transformation process: Started");
 
             // Get access to the input- and output-streams.
@@ -103,8 +115,9 @@ public class GoSaxonTransformerIT {
             xmlSocket.close();
 
             // Read the output from the process and dump it into a file.
-            System.out.println("Outputting to: " + buildDirectory + "output.xml");
-            FileOutputStream fileOutputStream = new FileOutputStream(buildDirectory + "output.xml");
+            File output = new File(buildDirectory + "output.xml");
+            System.out.println("Outputting to: " + output.getAbsolutePath());
+            FileOutputStream fileOutputStream = new FileOutputStream(output);
             new Thread(() -> {
                 try {
                     InputStream inputStream = outputSocket.getInputStream();
@@ -137,6 +150,13 @@ public class GoSaxonTransformerIT {
                 System.out.println("UNDEFINED: " + result);
                 Assertions.fail("Got an unexpected result from the transformer");
             }
+
+            // Check if the result contains the expected "apple-like-fruit"
+            Assertions.assertTrue(output.exists());
+            Assertions.assertTrue(output.isFile());
+            final String outputString = FileUtils.readFileToString(output, "UTF-8");
+            System.out.println("Output: \n" + outputString);
+            Assertions.assertTrue(outputString.contains("apple-like-fruit"));
 
             outputSocket.close();
         } catch (Exception e) {
