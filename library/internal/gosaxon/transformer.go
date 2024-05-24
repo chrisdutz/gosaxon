@@ -23,7 +23,6 @@ import (
 	_ "embed"
 	"errors"
 	"fmt"
-	"github.com/rs/zerolog/log"
 	"io"
 	"io/ioutil"
 	"os"
@@ -31,6 +30,8 @@ import (
 	"runtime"
 	"strconv"
 	"time"
+
+	"github.com/rs/zerolog/log"
 )
 
 //go:embed exec/gosaxon-transformer.exe
@@ -180,6 +181,7 @@ func (m *Transformer) Stop() error {
 	if m.cmd.ProcessState == nil || !m.cmd.ProcessState.Exited() {
 		log.Debug().Msg("Killing transformer")
 		_ = m.cmd.Process.Kill()
+		_ = m.cmd.Wait()
 	}
 
 	// If we were using the temp executor, delete it after being finished with the transformation.
